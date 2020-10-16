@@ -22,6 +22,7 @@ import (
 	apiEvents "github.com/prebid/prebid-server/stored_requests/events/api"
 	httpEvents "github.com/prebid/prebid-server/stored_requests/events/http"
 	postgresEvents "github.com/prebid/prebid-server/stored_requests/events/postgres"
+	"github.com/prebid/prebid-server/util/task"
 )
 
 // This gets set to the connection string used when a database connection is made. We only support a single
@@ -176,12 +177,17 @@ func newFetcher(cfg *config.StoredRequests, client *http.Client, db *sql.DB) (fe
 }
 
 func newCache(cfg *config.StoredRequests) stored_requests.Cache {
-	if cfg.InMemoryCache.Type == "none" {
-		glog.Infof("No Stored %s cache configured. The %s Fetcher backend will be used for all data requests", cfg.DataType(), cfg.DataType())
-		return &nil_cache.NilCache{}
+	cache := stored_requests.Cache{&nil_cache.NilCache{}, &nil_cache.NilCache{}, &nil_cache.NilCache{}}
+	switch {
+	case cfg.InMemoryCache.Type == "none":
+		glog.Warningf("No %s cache configured. The %s Fetcher backend will be used for all data requests", cfg.DataType(), cfg.DataType())
+	case cfg.DataType() == config.AccountDataType:
+		cache.Accounts = memory.NewCache(cfg.InMemoryCache.Size, cfg.InMemoryCache.TTL, "Accounts")
+	default:
+		cache.Requests = memory.NewCache(cfg.InMemoryCache.RequestCacheSize, cfg.InMemoryCache.TTL, "Requests")
+		cache.Imps = memory.NewCache(cfg.InMemoryCache.ImpCacheSize, cfg.InMemoryCache.TTL, "Imps")
 	}
-
-	return memory.NewCache(&cfg.InMemoryCache)
+	return cache
 }
 
 func newEventProducers(cfg *config.StoredRequests, client *http.Client, db *sql.DB, router *httprouter.Router) (eventProducers []events.EventProducer) {
@@ -192,26 +198,21 @@ func newEventProducers(cfg *config.StoredRequests, client *http.Client, db *sql.
 		eventProducers = append(eventProducers, newHttpEvents(client, cfg.HTTPEvents.TimeoutDuration(), cfg.HTTPEvents.RefreshRateDuration(), cfg.HTTPEvents.Endpoint))
 	}
 	if cfg.Postgres.CacheInitialization.Query != "" {
-		// Make sure we don't miss any updates in between the initial fetch and the "update" polling.
-		updateStartTime := time.Now()
-		timeout := time.Duration(cfg.Postgres.CacheInitialization.Timeout) * time.Millisecond
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		eventProducers = append(eventProducers, postgresEvents.LoadAll(ctx, db, cfg.Postgres.CacheInitialization.Query))
-		cancel()
-
-		if cfg.Postgres.PollUpdates.Query != "" {
-			eventProducers = append(eventProducers, newPostgresPolling(cfg.Postgres.PollUpdates, db, updateStartTime))
+		pgEventCfg := postgresEvents.PostgresEventProducerConfig{
+			DB:                 db,
+			RequestType:        cfg.DataType(),
+			CacheInitQuery:     cfg.Postgres.CacheInitialization.Query,
+			CacheInitTimeout:   time.Duration(cfg.Postgres.CacheInitialization.Timeout) * time.Millisecond,
+			CacheUpdateQuery:   cfg.Postgres.PollUpdates.Query,
+			CacheUpdateTimeout: time.Duration(cfg.Postgres.PollUpdates.Timeout) * time.Millisecond,
 		}
+		pgEventProducer := postgresEvents.NewPostgresEventProducer(pgEventCfg)
+		fetchInterval := time.Duration(cfg.Postgres.PollUpdates.RefreshRate) * time.Second
+		pgEventTickerTask := task.NewTickerTask(fetchInterval, pgEventProducer)
+		pgEventTickerTask.Start()
+		eventProducers = append(eventProducers, pgEventProducer)
 	}
 	return
-}
-
-func newPostgresPolling(cfg config.PostgresUpdatePolling, db *sql.DB, startTime time.Time) events.EventProducer {
-	timeout := time.Duration(cfg.Timeout) * time.Millisecond
-	ctxProducer := func() (ctx context.Context, canceller func()) {
-		return context.WithTimeout(context.Background(), timeout)
-	}
-	return postgresEvents.PollForUpdates(ctxProducer, db, cfg.Query, startTime, time.Duration(cfg.RefreshRate)*time.Second)
 }
 
 func newEventsAPI(router *httprouter.Router, endpoint string) events.EventProducer {

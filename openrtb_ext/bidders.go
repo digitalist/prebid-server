@@ -20,6 +20,9 @@ type BidderName string
 // BidderNameGeneral is reserved for non-bidder specific messages when using a map keyed on the bidder name.
 const BidderNameGeneral = BidderName("general")
 
+// BidderNameContext is reserved for first party data.
+const BidderNameContext = BidderName("context")
+
 // These names _must_ coincide with the bidder code in Prebid.js, if an adapter also exists in that project.
 // Please keep these (and the BidderMap) alphabetized to minimize merge conflicts among adapter submissions.
 // The bidder name 'general' is not allowed since it has special meaning in message maps.
@@ -47,6 +50,8 @@ const (
 	BidderBeintoo          BidderName = "beintoo"
 	BidderBetween          BidderName = "between"
 	BidderBrightroll       BidderName = "brightroll"
+	BidderColossus         BidderName = "colossus"
+	BidderConnectAd        BidderName = "connectad"
 	BidderConsumable       BidderName = "consumable"
 	BidderConversant       BidderName = "conversant"
 	BidderCpmstar          BidderName = "cpmstar"
@@ -61,8 +66,11 @@ const (
 	BidderGrid             BidderName = "grid"
 	BidderGumGum           BidderName = "gumgum"
 	BidderImprovedigital   BidderName = "improvedigital"
+	BidderInMobi           BidderName = "inmobi"
+	BidderInvibes          BidderName = "invibes"
 	BidderIx               BidderName = "ix"
 	BidderKidoz            BidderName = "kidoz"
+	BidderKrushmedia       BidderName = "krushmedia"
 	BidderKubient          BidderName = "kubient"
 	BidderLifestreet       BidderName = "lifestreet"
 	BidderLockerDome       BidderName = "lockerdome"
@@ -85,6 +93,7 @@ const (
 	BidderSmaato           BidderName = "smaato"
 	BidderSmartadserver    BidderName = "smartadserver"
 	BidderSmartRTB         BidderName = "smartrtb"
+	BidderSmartyAds        BidderName = "smartyads"
 	BidderSomoaudience     BidderName = "somoaudience"
 	BidderSonobi           BidderName = "sonobi"
 	BidderSovrn            BidderName = "sovrn"
@@ -132,6 +141,8 @@ var BidderMap = map[string]BidderName{
 	"beintoo":           BidderBeintoo,
 	"between":           BidderBetween,
 	"brightroll":        BidderBrightroll,
+	"colossus":          BidderColossus,
+	"connectad":         BidderConnectAd,
 	"consumable":        BidderConsumable,
 	"conversant":        BidderConversant,
 	"cpmstar":           BidderCpmstar,
@@ -146,8 +157,11 @@ var BidderMap = map[string]BidderName{
 	"grid":              BidderGrid,
 	"gumgum":            BidderGumGum,
 	"improvedigital":    BidderImprovedigital,
+	"inmobi":            BidderInMobi,
+	"invibes":           BidderInvibes,
 	"ix":                BidderIx,
 	"kidoz":             BidderKidoz,
+	"krushmedia":        BidderKrushmedia,
 	"kubient":           BidderKubient,
 	"lifestreet":        BidderLifestreet,
 	"lockerdome":        BidderLockerDome,
@@ -170,6 +184,7 @@ var BidderMap = map[string]BidderName{
 	"smaato":            BidderSmaato,
 	"smartadserver":     BidderSmartadserver,
 	"smartrtb":          BidderSmartRTB,
+	"smartyads":         BidderSmartyAds,
 	"somoaudience":      BidderSomoaudience,
 	"sonobi":            BidderSonobi,
 	"sovrn":             BidderSovrn,
