@@ -149,7 +149,11 @@ func getBidderParams(imp *openrtb.Imp) (openrtb_ext.ExtImpBetween, error) {
 			Message: "Invalid/Missing Host",
 		}
 	}
-
+	if len(betweenExt.PublisherId) < 1 {
+		return betweenExt, &errortypes.BadInput{
+			Message: "Invalid/Missing PublisherId",
+		}
+	}
 	return betweenExt, nil
 }
 
