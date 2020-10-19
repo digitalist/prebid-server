@@ -156,7 +156,22 @@ func getBidderParams(imp *openrtb.Imp) (openrtb_ext.ExtImpBetween, error) {
 func getMediaType(impID string, imps []openrtb.Imp) openrtb_ext.BidType {
 
 	bidType := openrtb_ext.BidTypeBanner
-	// TODO add video/native, maybe audio banner types when demand appears
+
+	for _, imp := range imps {
+		if imp.ID == impID {
+			if imp.Video != nil {
+				bidType = openrtb_ext.BidTypeVideo
+				break
+			} else if imp.Native != nil {
+				bidType = openrtb_ext.BidTypeNative
+				break
+			} else {
+				bidType = openrtb_ext.BidTypeBanner
+				break
+			}
+		}
+	}
+
 	return bidType
 }
 

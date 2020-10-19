@@ -1,9 +1,13 @@
 maintainer:
   email: "buying@betweenx.com"
 capabilities:
-  site:
-    mediaTypes:
-      - banner
   app:
     mediaTypes:
       - banner
+      - native
+      - video
+  site:
+    mediaTypes:
+      - banner
+      - native
+      - video
