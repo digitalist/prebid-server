@@ -46,7 +46,7 @@ func (a *BetweenAdapter) MakeRequests(request *openrtb.BidRequest, reqInfo *adap
 			continue
 		}
 
-		urlParams := macros.EndpointTemplateParams{Host: reqExt.Host}
+		urlParams := macros.EndpointTemplateParams{Host: reqExt.Host, PublisherID: reqExt.PublisherId}
 		url, err := macros.ResolveMacros(a.EndpointTemplate, urlParams)
 
 		if err != nil {
